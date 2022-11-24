@@ -286,7 +286,7 @@ me.add_entities_to_chunks = function(build_type) -- build_type: deconstruction, 
                 end
             end
 
-            if build_type == "deconstruction" and entity.valid and not entity.to_be_deconstructed() then
+            if build_type == "deconstruction" and entity ~= nil and entity.valid and not entity.to_be_deconstructed() then
                 entity = nil
             end
 

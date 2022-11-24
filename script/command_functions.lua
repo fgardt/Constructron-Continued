@@ -115,7 +115,7 @@ me.reacquire_stations = function()
 
         for k, station in pairs(stations) do
             local unit_number = station.unit_number
-            if not global.service_stations[unit_number] then
+            if unit_number ~= nil and not global.service_stations[unit_number] then
                 global.service_stations[unit_number] = station
             end
 
@@ -142,7 +142,7 @@ me.reacquire_ctrons = function()
 
         for k, constructron in pairs(constructrons) do
             local unit_number = constructron.unit_number
-            if not global.constructrons[unit_number] then
+            if unit_number ~= nil and not global.constructrons[unit_number] then
                 global.constructrons[unit_number] = constructron
             end
 
