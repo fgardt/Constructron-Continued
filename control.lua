@@ -5,22 +5,29 @@ local cmd = require("script/command_functions")
 local entity_proc = require("script/entity_processor")
 local job_proc = require("script/job_processor")
 
+local gui = require("script/gui")
+local gui_handler = require("script/gui_handler")
+
 -- main workers
 script.on_nth_tick(60, job_proc.process_job_queue)
 
 script.on_nth_tick(15, function()
     if not global.entity_proc_trigger then return end -- trip switch to return early when there is nothing to process
-    if next(global.deconstruction_entities) then -- deconstruction has priority over construction.
-        entity_proc.add_entities_to_chunks("deconstruction", global.deconstruction_entities, global.deconstruct_queue, global.deconstruct_marked_tick)
+    if next(global.deconstruction_entities) then      -- deconstruction has priority over construction.
+        entity_proc.add_entities_to_chunks("deconstruction", global.deconstruction_entities, global.deconstruct_queue,
+            global.deconstruct_marked_tick)
     elseif next(global.ghost_entities) then
-        entity_proc.add_entities_to_chunks("construction", global.ghost_entities, global.construct_queue, global.ghost_tick)
+        entity_proc.add_entities_to_chunks("construction", global.ghost_entities, global.construct_queue,
+            global.ghost_tick)
     elseif next(global.upgrade_entities) then
-        entity_proc.add_entities_to_chunks("upgrade", global.upgrade_entities, global.upgrade_queue, global.upgrade_marked_tick)
+        entity_proc.add_entities_to_chunks("upgrade", global.upgrade_entities, global.upgrade_queue,
+            global.upgrade_marked_tick)
     elseif next(global.repair_entities) then
-        entity_proc.add_entities_to_chunks("repair", global.repair_entities, global.repair_queue, global.repair_marked_tick)
+        entity_proc.add_entities_to_chunks("repair", global.repair_entities, global.repair_queue,
+            global.repair_marked_tick)
     else
         global.entity_proc_trigger = false -- stop entity processing
-        global.queue_proc_trigger = true -- start job processing
+        global.queue_proc_trigger = true   -- start job processing
     end
 end)
 
@@ -30,7 +37,7 @@ script.on_nth_tick(54000, (function()
     for s, surface in pairs(game.surfaces) do
         if (global.constructrons_count[surface.index] <= 0) or (global.stations_count[surface.index] <= 0) then
             debug_lib.DebugLog('No Constructrons or Service Stations found on ' .. surface.name)
-            debug_lib.DebugLog('All job queues on '.. surface.name ..' cleared!')
+            debug_lib.DebugLog('All job queues on ' .. surface.name .. ' cleared!')
             global.construct_queue[surface.index] = {}
             global.deconstruct_queue[surface.index] = {}
             global.upgrade_queue[surface.index] = {}
@@ -93,9 +100,9 @@ local ensure_globals = function()
     global.allowed_items = {}
     for item_name, _ in pairs(game.item_prototypes) do
         local recipes = game.get_filtered_recipe_prototypes({
-                {filter = "has-product-item", elem_filters = {{filter = "name", name = item_name}}},
-            })
-        for _ , recipe in pairs(recipes) do
+            { filter = "has-product-item", elem_filters = { { filter = "name", name = item_name } } },
+        })
+        for _, recipe in pairs(recipes) do
             if not game.forces["player"].recipes[recipe.name].hidden then -- if the recipe is hidden disallow it
                 global.allowed_items[item_name] = true
             end
@@ -108,12 +115,18 @@ local ensure_globals = function()
     global.items_to_place_cache = {}
     for name, v in pairs(game.entity_prototypes) do
         if v.items_to_place_this ~= nil and v.items_to_place_this[1] and v.items_to_place_this[1].name then -- bots will only ever use the first item from this list
-            global.items_to_place_cache[name] = {item = v.items_to_place_this[1].name, count = v.items_to_place_this[1].count}
+            global.items_to_place_cache[name] = {
+                item = v.items_to_place_this[1].name,
+                count = v.items_to_place_this[1].count
+            }
         end
     end
     for name, v in pairs(game.tile_prototypes) do
         if v.items_to_place_this ~= nil and v.items_to_place_this[1] and v.items_to_place_this[1].name then -- bots will only ever use the first item from this list
-            global.items_to_place_cache[name] = {item = v.items_to_place_this[1].name, count = v.items_to_place_this[1].count}
+            global.items_to_place_cache[name] = {
+                item = v.items_to_place_this[1].name,
+                count = v.items_to_place_this[1].count
+            }
         end
     end
     -- build trash_items_cache
@@ -147,9 +160,17 @@ end
 local init = function()
     ensure_globals()
     pathfinder.init_globals()
+
+    gui.init()
+    gui_handler.init(gui)
+end
+
+local load = function()
+    gui_handler.init(gui)
 end
 
 script.on_init(init)
+script.on_load(load)
 script.on_configuration_changed(init)
 
 --===========================================================================--
@@ -179,12 +200,16 @@ script.on_event(ev.on_surface_deleted, function(event)
     global.constructrons_count[index] = nil
     global.stations_count[index] = nil
 end)
+script.on_event(ev.on_runtime_mod_setting_changed, ctron.mod_settings_changed)
+
+script.on_event(ev.on_player_created, gui.init)
+script.on_event(ev.on_gui_click, gui_handler.handle)
 
 ---@param event EventData.on_player_used_spider_remote
 script.on_event(ev.on_player_used_spider_remote, (function(event)
     if global.spider_remote_toggle and event.vehicle.name == "constructron" then
         pathfinder.set_autopilot(event.vehicle, {})
-        local request_params = {unit = event.vehicle, goal = event.position}
+        local request_params = { unit = event.vehicle, goal = event.position }
         pathfinder.request_path(request_params)
     end
 end))
@@ -309,51 +334,51 @@ local function enable(player, parameters)
     log("parameters: " .. serpent.block(parameters))
     if parameters[1] == "construction" then
         global.construction_job_toggle = true
-        settings.global["construct_jobs"] = {value = true}
+        settings.global["construct_jobs"] = { value = true }
         cmd.reload_entities()
         cmd.reacquire_construction_jobs()
         game.print('Construction jobs enabled.')
     elseif parameters[1] == "rebuild" then
         global.rebuild_job_toggle = true
-        settings.global["rebuild_jobs"] = {value = true}
+        settings.global["rebuild_jobs"] = { value = true }
         game.print('Rebuild jobs enabled.')
     elseif parameters[1] == "deconstruction" then
         global.deconstruction_job_toggle = true
-        settings.global["deconstruct_jobs"] = {value = true}
+        settings.global["deconstruct_jobs"] = { value = true }
         cmd.reacquire_deconstruction_jobs()
         game.print('Deconstruction jobs enabled.')
     elseif parameters[1] == "upgrade" then
         global.upgrade_job_toggle = true
-        settings.global["upgrade_jobs"] = {value = true}
+        settings.global["upgrade_jobs"] = { value = true }
         cmd.reacquire_upgrade_jobs()
         game.print('Upgrade jobs enabled.')
     elseif parameters[1] == "repair" then
         global.repair_job_toggle = true
-        settings.global["repair_jobs"] = {value = true}
+        settings.global["repair_jobs"] = { value = true }
         game.print('Repair jobs enabled.')
     elseif parameters[1] == "all" then
         global.construction_job_toggle = true
-        settings.global["construct_jobs"] = {value = true}
+        settings.global["construct_jobs"] = { value = true }
         cmd.reload_entities()
         cmd.reacquire_construction_jobs()
         game.print('Construction jobs enabled.')
         global.rebuild_job_toggle = true
-        settings.global["rebuild_jobs"] = {value = true}
+        settings.global["rebuild_jobs"] = { value = true }
         game.print('Rebuild jobs enabled.')
         global.deconstruction_job_toggle = true
-        settings.global["deconstruct_jobs"] = {value = true}
+        settings.global["deconstruct_jobs"] = { value = true }
         cmd.reacquire_deconstruction_jobs()
         game.print('Deconstruction jobs enabled.')
         global.upgrade_job_toggle = true
-        settings.global["upgrade_jobs"] = {value = true}
+        settings.global["upgrade_jobs"] = { value = true }
         cmd.reacquire_upgrade_jobs()
         game.print('Upgrade jobs enabled.')
         global.repair_job_toggle = true
-        settings.global["repair_jobs"] = {value = true}
+        settings.global["repair_jobs"] = { value = true }
         game.print('Repair jobs enabled.')
     elseif parameters[1] == "debug" then
         global.debug_toggle = true
-        settings.global["constructron-debug-enabled"] = {value = true}
+        settings.global["constructron-debug-enabled"] = { value = true }
         game.print('Debug view enabled.')
     elseif parameters[1] == "landfill" then
         game.print('Landfill is now permanently enabled.')
@@ -379,43 +404,43 @@ local function disable(player, parameters)
     log("parameters: " .. serpent.block(parameters))
     if parameters[1] == "construction" then
         global.construction_job_toggle = false
-        settings.global["construct_jobs"] = {value = false}
+        settings.global["construct_jobs"] = { value = false }
         game.print('Construction jobs disabled.')
     elseif parameters[1] == "rebuild" then
         global.rebuild_job_toggle = false
-        settings.global["rebuild_jobs"] = {value = false}
+        settings.global["rebuild_jobs"] = { value = false }
         game.print('Rebuild jobs disabled.')
     elseif parameters[1] == "deconstruction" then
         global.deconstruction_job_toggle = false
-        settings.global["deconstruct_jobs"] = {value = false}
+        settings.global["deconstruct_jobs"] = { value = false }
         game.print('Deconstruction jobs disabled.')
     elseif parameters[1] == "upgrade" then
         global.upgrade_job_toggle = false
-        settings.global["upgrade_jobs"] = {value = false}
+        settings.global["upgrade_jobs"] = { value = false }
         game.print('Upgrade jobs disabled.')
     elseif parameters[1] == "repair" then
         global.repair_job_toggle = false
-        settings.global["repair_jobs"] = {value = false}
+        settings.global["repair_jobs"] = { value = false }
         game.print('Repair jobs disabled.')
     elseif parameters[1] == "all" then
         global.construction_job_toggle = false
-        settings.global["construct_jobs"] = {value = false}
+        settings.global["construct_jobs"] = { value = false }
         game.print('Construction jobs disabled.')
         global.rebuild_job_toggle = false
-        settings.global["rebuild_jobs"] = {value = false}
+        settings.global["rebuild_jobs"] = { value = false }
         game.print('Rebuild jobs disabled.')
         global.deconstruction_job_toggle = false
-        settings.global["deconstruct_jobs"] = {value = false}
+        settings.global["deconstruct_jobs"] = { value = false }
         game.print('Deconstruction jobs disabled.')
         global.upgrade_job_toggle = false
-        settings.global["upgrade_jobs"] = {value = false}
+        settings.global["upgrade_jobs"] = { value = false }
         game.print('Upgrade jobs disabled.')
         global.repair_job_toggle = false
-        settings.global["repair_jobs"] = {value = false}
+        settings.global["repair_jobs"] = { value = false }
         game.print('Repair jobs disabled.')
     elseif parameters[1] == "debug" then
         global.debug_toggle = false
-        settings.global["constructron-debug-enabled"] = {value = false}
+        settings.global["constructron-debug-enabled"] = { value = false }
         game.print('Debug view disabled.')
     elseif parameters[1] == "landfill" then
         game.print('Landfill is now permanently enabled.')
@@ -436,7 +461,7 @@ local function stats(player, _)
     local global_stats = cmd.stats()
     log(serpent.block(global_stats))
     if global_stats and player then
-        for k,v in pairs(global_stats) do
+        for k, v in pairs(global_stats) do
             player.print(k .. ": " .. tostring(v))
         end
     end
@@ -449,7 +474,7 @@ local function stats(player, _)
             available_count = available_count + 1
         end
     end
-    game.print('Constructrons on a job:' .. used_count ..'')
+    game.print('Constructrons on a job:' .. used_count .. '')
     game.print('Idle Constructrons:' .. available_count .. '')
     return global_stats
 end
@@ -486,7 +511,7 @@ commands.add_command(
             local params = custom_lib.string_split(param.parameter, " ")
             local command = table.remove(params, 1) --[[@as string]]
             if command and ctron_commands[command] then
-                ctron_commands[command](player,params)
+                ctron_commands[command](player, params)
             else
                 game.print('Command parameter does not exist.')
                 cmd.help_text()
