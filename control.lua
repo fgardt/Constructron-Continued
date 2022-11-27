@@ -264,6 +264,10 @@ local function reset(player, parameters)
     elseif parameters[1] == "recall" then
         game.print('Recalling Constructrons to station(s).')
         cmd.recall_ctrons()
+    elseif parameters[1] == "gui" then
+        game.print('Reset GUI.')
+        gui.init()
+        gui_handler.init(gui)
     elseif parameters[1] == "all" then
         global.pathfinder_queue = {}
         global.pathfinder_requests = {}
@@ -292,6 +296,10 @@ local function reset(player, parameters)
         cmd.reacquire_construction_jobs()
         -- Reacquire Upgrade jobs
         cmd.reacquire_upgrade_jobs()
+
+        -- Reinitialize GUI
+        gui.init()
+        gui_handler.init(gui)
     else
         game.print('Command parameter does not exist.')
         cmd.help_text()

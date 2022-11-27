@@ -4,18 +4,18 @@ local pathfinder = require("script/pathfinder")
 local me = {}
 
 me.reset_settings = function()
-    settings.global["construct_jobs"] = {value = true}
-    settings.global["rebuild_jobs"] = {value = true}
-    settings.global["deconstruct_jobs"] = {value = true}
-    settings.global["upgrade_jobs"] = {value = true}
-    settings.global["repair_jobs"] = {value = false}
-    settings.global["constructron-debug-enabled"] = {value = false}
-    settings.global["desired_robot_count"] = {value = 50}
-    settings.global["desired_robot_name"] = {value = "construction-robot"}
-    settings.global["entities_per_tick"] = {value = 1000}
-    settings.global["clear_robots_when_idle"] = {value = false}
-    settings.global["job-start-delay"] = {value = 5}
-    settings.global["horde_mode"] = {value = false}
+    settings.global["construct_jobs"] = { value = true }
+    settings.global["rebuild_jobs"] = { value = true }
+    settings.global["deconstruct_jobs"] = { value = true }
+    settings.global["upgrade_jobs"] = { value = true }
+    settings.global["repair_jobs"] = { value = false }
+    settings.global["constructron-debug-enabled"] = { value = false }
+    settings.global["desired_robot_count"] = { value = 50 }
+    settings.global["desired_robot_name"] = { value = "construction-robot" }
+    settings.global["entities_per_tick"] = { value = 1000 }
+    settings.global["clear_robots_when_idle"] = { value = false }
+    settings.global["job-start-delay"] = { value = 5 }
+    settings.global["horde_mode"] = { value = false }
 end
 
 me.clear_queues = function()
@@ -53,11 +53,11 @@ end
 me.reacquire_construction_jobs = function()
     for _, surface in pairs(game.surfaces) do
         local ghosts = surface.find_entities_filtered {
-            name = {"entity-ghost", "tile-ghost"},
-            force = {"player", "neutral"},
+            name = { "entity-ghost", "tile-ghost" },
+            force = { "player", "neutral" },
             surface = surface.name
         }
-        game.print('found '.. #ghosts ..' entities on '.. surface.name ..' to construct.')
+        game.print('found ' .. #ghosts .. ' entities on ' .. surface.name .. ' to construct.')
         for _, entity in ipairs(ghosts) do
             global.ghost_index = global.ghost_index + 1
             global.ghost_entities[global.ghost_index] = entity
@@ -71,10 +71,10 @@ me.reacquire_deconstruction_jobs = function()
     for _, surface in pairs(game.surfaces) do
         local decons = surface.find_entities_filtered {
             to_be_deconstructed = true,
-            force = {"player", "neutral"},
+            force = { "player", "neutral" },
             surface = surface.name
         }
-        game.print('found '.. #decons ..' entities on '.. surface.name ..' to deconstruct.')
+        game.print('found ' .. #decons .. ' entities on ' .. surface.name .. ' to deconstruct.')
         for _, entity in ipairs(decons) do
             global.decon_index = global.decon_index + 1
             global.deconstruction_entities[global.decon_index] = entity
@@ -91,7 +91,7 @@ me.reacquire_upgrade_jobs = function()
             force = "player",
             surface = surface.name
         }
-        game.print('found '.. #upgrades ..' entities on '.. surface.name ..' to upgrade.')
+        game.print('found ' .. #upgrades .. ' entities on ' .. surface.name .. ' to upgrade.')
         for _, entity in ipairs(upgrades) do
             global.upgrade_index = global.upgrade_index + 1
             global.upgrade_entities[global.upgrade_index] = entity
@@ -145,7 +145,7 @@ me.reacquire_ctrons = function()
     for s, surface in pairs(game.surfaces) do
         global.constructrons_count[surface.index] = 0
         local constructrons = surface.find_entities_filtered {
-            name = {"constructron", "constructron-rocket-powered"},
+            name = { "constructron", "constructron-rocket-powered" },
             force = "player",
             surface = surface.name
         }
@@ -168,7 +168,8 @@ me.reacquire_ctrons = function()
 
             global.constructrons_count[surface.index] = global.constructrons_count[surface.index] + 1
         end
-        game.print('Registered ' .. global.constructrons_count[surface.index] .. ' constructrons on ' .. surface.name .. '.')
+        game.print('Registered ' ..
+        global.constructrons_count[surface.index] .. ' constructrons on ' .. surface.name .. '.')
     end
 end
 
@@ -188,7 +189,7 @@ me.recall_ctrons = function()
     for _, surface in pairs(game.surfaces) do
         if (global.stations_count[surface.index] > 0) and (global.constructrons_count[surface.index] > 0) then
             local constructrons = surface.find_entities_filtered {
-                name = {"constructron", "constructron-rocket-powered"},
+                name = { "constructron", "constructron-rocket-powered" },
                 force = "player",
                 surface = surface.name
             }
@@ -232,9 +233,9 @@ me.rebuild_caches = function()
     global.allowed_items = {}
     for item_name, _ in pairs(game.item_prototypes) do
         local recipes = game.get_filtered_recipe_prototypes({
-                {filter = "has-product-item", elem_filters = {{filter = "name", name = item_name}}},
-            })
-        for _ , recipe in pairs(recipes) do
+            { filter = "has-product-item", elem_filters = { { filter = "name", name = item_name } } },
+        })
+        for _, recipe in pairs(recipes) do
             if not game.forces["player"].recipes[recipe.name].hidden then -- if the recipe is hidden disallow it
                 global.allowed_items[item_name] = true
             end
@@ -247,12 +248,14 @@ me.rebuild_caches = function()
     global.items_to_place_cache = {}
     for name, v in pairs(game.entity_prototypes) do
         if v.items_to_place_this ~= nil and v.items_to_place_this[1] and v.items_to_place_this[1].name then -- bots will only ever use the first item from this list
-            global.items_to_place_cache[name] = {item = v.items_to_place_this[1].name, count = v.items_to_place_this[1].count}
+            global.items_to_place_cache[name] = { item = v.items_to_place_this[1].name,
+                count = v.items_to_place_this[1].count }
         end
     end
     for name, v in pairs(game.tile_prototypes) do
         if v.items_to_place_this ~= nil and v.items_to_place_this[1] and v.items_to_place_this[1].name then -- bots will only ever use the first item from this list
-            global.items_to_place_cache[name] = {item = v.items_to_place_this[1].name, count = v.items_to_place_this[1].count}
+            global.items_to_place_cache[name] = { item = v.items_to_place_this[1].name,
+                count = v.items_to_place_this[1].count }
         end
     end
     -- build trash_items_cache
@@ -285,7 +288,7 @@ me.stats = function()
     }
     for _, data_name in pairs(queues) do
         local data = global[data_name]
-        if type(data)=="table" then
+        if type(data) == "table" then
             global_stats[data_name] = table_size(data)
         else
             global_stats[data_name] = tostring(data)
@@ -302,7 +305,7 @@ me.stats = function()
     for s, surface in pairs(game.surfaces) do
         for _, data_name in pairs(surface_queues) do
             local data = global[data_name][surface.index]
-            if type(data)=="table" then
+            if type(data) == "table" then
                 -- log(serpent.block(data))
                 global_stats[surface.name .. ":" .. data_name] = table_size(data)
             else
@@ -317,7 +320,7 @@ me.help_text = function()
     game.print('Constructron-Continued command help:')
     game.print('/ctron help - show this help message')
     game.print('/ctron (enable|disable) (debug|construction|deconstruction|upgrade|repair|all) - toggle job types.')
-    game.print('/ctron reset (settings|queues|entities|all)')
+    game.print('/ctron reset (settings|queues|entities|gui|all)')
     game.print('/ctron clear all - clears all jobs, queued jobs and unprocessed entities')
     game.print('/ctron stats for a basic display of queue length')
     game.print('See Factorio mod portal for further assistance https://mods.factorio.com/mod/Constructron-Continued')
