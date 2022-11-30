@@ -203,7 +203,7 @@ end)
 script.on_event(ev.on_runtime_mod_setting_changed, ctron.mod_settings_changed)
 
 script.on_event(ev.on_player_created, gui.init)
-script.on_event(ev.on_gui_click, gui_handler.handle)
+gui_handler.register()
 
 ---@param event EventData.on_player_used_spider_remote
 script.on_event(ev.on_player_used_spider_remote, (function(event)
