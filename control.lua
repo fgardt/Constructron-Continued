@@ -209,6 +209,9 @@ script.on_event(ev.on_surface_deleted, function(event)
 end)
 script.on_event(ev.on_runtime_mod_setting_changed, ctron.mod_settings_changed)
 
+script.on_event(ev.on_player_created, (function(event) --[[@cast event EventData.on_player_created]]
+    gui.init(game.players[event.player_index])
+end))
 script.on_event(ev.on_player_changed_surface, gui_handler.player_changed_surfaces)
 
 gui_handler.register()
