@@ -164,16 +164,9 @@ local init = function()
     for _, player in pairs(game.players) do
         gui.init(player)
     end
-
-    gui_handler.init(gui)
-end
-
-local load = function()
-    gui_handler.init(gui)
 end
 
 script.on_init(init)
-script.on_load(load)
 script.on_configuration_changed(init)
 
 --===========================================================================--
@@ -284,7 +277,6 @@ local function reset(player, parameters)
     elseif parameters[1] == "gui" then
         game.print('Reset GUI.')
         gui.init(player)
-        gui_handler.init(gui)
     elseif parameters[1] == "all" then
         global.pathfinder_queue = {}
         global.pathfinder_requests = {}
@@ -316,7 +308,6 @@ local function reset(player, parameters)
 
         -- Reinitialize GUI
         gui.init(player)
-        gui_handler.init(gui)
     else
         game.print('Command parameter does not exist.')
         cmd.help_text()
