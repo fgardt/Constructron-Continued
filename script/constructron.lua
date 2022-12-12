@@ -64,8 +64,9 @@ ctron.actions = {
             local merged_items = table.deepcopy(request_items)
             -- get inventory conents
             local inventory_items = {}
-            for _, inventory_type in pairs({"spider_trash", "spider_trunk"}) do
-                local inventory = constructron.get_inventory(defines.inventory[inventory_type] --[[@as defines.inventory]])
+            for _, inventory_type in pairs({ "spider_trash", "spider_trunk" }) do
+                local inventory = constructron.get_inventory(defines.inventory
+                    [inventory_type] --[[@as defines.inventory]])
                 if inventory ~= nil then
                     local inv_contents = inventory.get_contents()
                     if (inv_contents ~= nil) then
@@ -79,7 +80,7 @@ ctron.actions = {
             if game.item_prototypes[global.desired_robot_name] then
                 merged_items[global.desired_robot_name] = global.desired_robot_count
             else
-                settings.global["desired_robot_name"] = {value = "construction-robot"}
+                settings.global["desired_robot_name"] = { value = "construction-robot" }
                 global.desired_robot_name = "construction-robot"
                 game.print("desired_robot_name name is not valid in mod settings! Robot name reset!")
                 merged_items[global.desired_robot_name] = global.desired_robot_count
@@ -175,8 +176,8 @@ ctron.actions = {
         if (global.constructrons_count[constructron.surface.index] > 10) then
             local distance = 5 + math.random(5)
             local alpha = math.random(360)
-            local offset = {x = (math.cos(alpha) * distance), y = (math.sin(alpha) * distance)}
-            local new_position = {x = (constructron.position.x + offset.x), y = (constructron.position.y + offset.y)}
+            local offset = { x = (math.cos(alpha) * distance), y = (math.sin(alpha) * distance) }
+            local new_position = { x = (constructron.position.x + offset.x), y = (constructron.position.y + offset.y) }
             constructron.autopilot_destination = new_position
         end
     end,
@@ -197,8 +198,8 @@ ctron.actions = {
         end
         debug_lib.draw_rectangle(chunk.minimum, chunk.maximum, surface, "blue", true, 600)
         local ghosts = surface.find_entities_filtered {
-            area = {chunk.minimum, chunk.maximum},
-            type = {"entity-ghost", "tile-ghost", "item-request-proxy"},
+            area = { chunk.minimum, chunk.maximum },
+            type = { "entity-ghost", "tile-ghost", "item-request-proxy" },
             force = "player"
         } or {}
         if next(ghosts) then -- if there are ghosts because inventory doesn't have the items for them, add them to be built for the next job
@@ -223,9 +224,9 @@ ctron.actions = {
         end
         debug_lib.draw_rectangle(chunk.minimum, chunk.maximum, surface, "red", true, 600)
         local decons = surface.find_entities_filtered {
-            area = {chunk.minimum, chunk.maximum},
+            area = { chunk.minimum, chunk.maximum },
             to_be_deconstructed = true,
-            force = {"player", "neutral"}
+            force = { "player", "neutral" }
         } or {}
         if next(decons) then -- if there are ghosts because inventory doesn't have the items for them, add them to be built for the next job
             debug_lib.DebugLog('added ' .. #decons .. ' to be deconstructed.')
@@ -250,7 +251,7 @@ ctron.actions = {
         end
         debug_lib.draw_rectangle(chunk.minimum, chunk.maximum, surface, "green", true, 600)
         local upgrades = surface.find_entities_filtered {
-            area = {chunk.minimum, chunk.maximum},
+            area = { chunk.minimum, chunk.maximum },
             force = "player",
             to_be_upgraded = true
         }
@@ -278,16 +279,16 @@ ctron.conditions = {
         local constructron = job.constructron
         debug_lib.VisualDebugText("Moving to position", constructron, -1, 1)
         local ticks = (game.tick - job.start_tick)
-        if not (ticks > 119) then return false end -- not enough time (two seconds) since last check
+        if not (ticks > 119) then return false end                                  -- not enough time (two seconds) since last check
         local distance_from_pos = chunk_util.distance_between(constructron.position, position)
-        if (distance_from_pos < 5) then return true end -- condition is satisfied
-        if not job.path_active then -- check if the path is active
-            if job.request_pathid and (ticks > 900)then -- check that there is a request
+        if (distance_from_pos < 5) then return true end                             -- condition is satisfied
+        if not job.path_active then                                                 -- check if the path is active
+            if job.request_pathid and (ticks > 900) then                            -- check that there is a request
                 job.start_tick = game.tick
                 ctron.actions[job.action](job, table.unpack(job.action_args or {})) -- there is no request, request a path.
             end
             debug_lib.VisualDebugText("Waiting for pathfinder", constructron, -0.5, 1)
-            return false -- condition is not met
+            return false         -- condition is not met
         end
         if job.landfill_job then -- is this a landfill job?
             if not constructron.logistic_cell or not constructron.logistic_cell.logistic_network.can_satisfy_request("landfill", 1) then
@@ -306,7 +307,7 @@ ctron.conditions = {
             ctron.graceful_wrapup(job)
             return false
         end
-        if not constructron.autopilot_destination then -- path lost recovery
+        if not constructron.autopilot_destination then                          -- path lost recovery
             job.start_tick = game.tick
             ctron.actions[job.action](job, table.unpack(job.action_args or {})) -- retry
             return false
@@ -342,7 +343,7 @@ ctron.conditions = {
                     local area = chunk_util.get_area_from_position(constructron.position, cell.construction_radius)
                     local ghosts = constructron.surface.find_entities_filtered {
                         area = area,
-                        name = {"entity-ghost", "tile-ghost"},
+                        name = { "entity-ghost", "tile-ghost" },
                         force = constructron.force.name
                     }
                     for _, entity in pairs(ghosts) do
@@ -358,7 +359,7 @@ ctron.conditions = {
                         end
                     end
                 end
-                return true -- condition is satisfied
+                return true                -- condition is satisfied
             else
                 ctron.graceful_wrapup(job) -- missing roboports.. leave
                 return false
@@ -395,7 +396,7 @@ ctron.conditions = {
                     local decons = constructron.surface.find_entities_filtered {
                         area = area,
                         to_be_deconstructed = true,
-                        force = {constructron.force.name, "neutral"}
+                        force = { constructron.force.name, "neutral" }
                     }
                     -- are the entities actually in range?
                     if not ((game_tick - decon_tick) < 900) then
@@ -452,7 +453,7 @@ ctron.conditions = {
                         end
                     end
                 end
-                return true -- condition is satisfied
+                return true                -- condition is satisfied
             else
                 ctron.graceful_wrapup(job) -- missing roboports.. leave
                 return false
@@ -508,9 +509,9 @@ ctron.conditions = {
                         if new_station then
                             table.insert(global.job_bundles[job.bundle_index], 1, {
                                 action = 'go_to_position',
-                                action_args = {new_station.position},
+                                action_args = { new_station.position },
                                 leave_condition = 'position_done',
-                                leave_args = {new_station.position},
+                                leave_args = { new_station.position },
                                 constructron = constructron,
                                 bundle_index = job.bundle_index
                             })
@@ -553,9 +554,9 @@ ctron.conditions = {
                     if new_station then
                         table.insert(global.job_bundles[job.bundle_index], 1, {
                             action = 'go_to_position',
-                            action_args = {new_station.position},
+                            action_args = { new_station.position },
                             leave_condition = 'position_done',
-                            leave_args = {new_station.position},
+                            leave_args = { new_station.position },
                             constructron = constructron,
                             bundle_index = job.bundle_index
                         })
@@ -595,8 +596,9 @@ script.on_nth_tick(1, (function()
             if job.constructron and job.constructron.valid then
                 local constructron = job.constructron
                 if constructron.autopilot_destination then
-                    if (constructron.speed > 0.5) then  -- 0.5 tiles per second is about the fastest a spider can move with 5 vanilla Exoskeletons.
-                        local distance = chunk_util.distance_between(constructron.position, constructron.autopilot_destination)
+                    if (constructron.speed > 0.5) then -- 0.5 tiles per second is about the fastest a spider can move with 5 vanilla Exoskeletons.
+                        local distance = chunk_util.distance_between(constructron.position,
+                            constructron.autopilot_destination)
                         local last_distance = job.wp_last_distance
                         if distance < 1 or (last_distance and distance > last_distance) then
                             constructron.stop_spider()
@@ -640,8 +642,8 @@ end
 ctron.replace_roboports = function(grid, old_eq, new_eq)
     local grid_pos = old_eq.position
     local eq_energy = old_eq.energy
-    grid.take{ position = old_eq.position }
-    local new_set = grid.put{ name = new_eq, position = grid_pos }
+    grid.take { position = old_eq.position }
+    local new_set = grid.put { name = new_eq, position = grid_pos }
     if new_set then
         new_set.energy = eq_energy
     end
@@ -653,7 +655,7 @@ ctron.disable_roboports = function(grid, size) -- doesn't really disable them, i
     for _, eq in next, grid.equipment do
         if eq.type == "roboport-equipment" and not (eq.prototype.logistic_parameters.construction_radius == size) then
             if not string.find(eq.name, "%-reduced%-" .. size) then
-                ctron.replace_roboports(grid, eq, (eq.prototype.take_result.name .. "-reduced-" .. size ))
+                ctron.replace_roboports(grid, eq, (eq.prototype.take_result.name .. "-reduced-" .. size))
             end
         end
     end
@@ -669,8 +671,8 @@ ctron.enable_roboports = function(grid) -- doesn't really enable roboports, it r
 end
 
 ---@param constructron LuaEntity
----@param state ConstructronStatus
----@param value uint | boolean
+---@param state ConstructronStatus | "color"
+---@param value uint | boolean | ConstructronColorStatus
 ctron.set_constructron_status = function(constructron, state, value)
     if global.constructron_statuses[constructron.unit_number] then
         global.constructron_statuses[constructron.unit_number][state] = value
@@ -681,8 +683,8 @@ ctron.set_constructron_status = function(constructron, state, value)
 end
 
 ---@param constructron LuaEntity
----@param state ConstructronStatus
----@return uint | boolean?
+---@param state ConstructronStatus | "color"
+---@return uint | boolean | ConstructronColorStatus?
 ctron.get_constructron_status = function(constructron, state)
     if global.constructron_statuses[constructron.unit_number] then
         return global.constructron_statuses[constructron.unit_number][state]
