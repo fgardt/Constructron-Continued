@@ -1,4 +1,5 @@
 local color_lib = require("script/color_lib")
+---@class DebugUtil
 local me = {}
 
 ---@param message LocalisedString
@@ -21,7 +22,7 @@ me.VisualDebugText = function(message, entity, offset, ttl)
             filled = true,
             surface = entity.surface,
             time_to_live = (ttl * 60) or 60,
-            target_offset = {0, (offset or 0)},
+            target_offset = { 0, (offset or 0) },
             alignment = "center",
             color = {
                 r = 255,
@@ -37,8 +38,8 @@ end
 ---@param position MapPosition
 ---@param surface LuaSurface
 ---@param color string
----@param radius integer
----@param ttl uint
+---@param radius double
+---@param ttl uint?
 me.VisualDebugCircle = function(position, surface, color, radius, ttl)
     if global.debug_toggle then
         rendering.draw_circle {

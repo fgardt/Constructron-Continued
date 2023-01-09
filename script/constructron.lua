@@ -94,7 +94,7 @@ ctron.actions = {
             end
             -- request the required items for the job
             local slot = 1
-            for name, count in pairs(merged_items) do
+            for name, count in pairs(merged_items) do --[[@cast count uint]]
                 if (global.allowed_items[name] == true) then
                     constructron.set_vehicle_logistic_slot(slot, {
                         name = name,
