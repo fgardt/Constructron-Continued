@@ -9,7 +9,10 @@ local gui = require("script/gui")
 local gui_handler = require("script/gui_handler")
 
 -- main workers
-script.on_nth_tick(60, job_proc.process_job_queue)
+script.on_nth_tick(60, (function(event)
+    job_proc.process_job_queue()
+    gui_handler.update_all(event)
+end))
 
 script.on_nth_tick(15, function()
     if not global.entity_proc_trigger then return end -- trip switch to return early when there is nothing to process
@@ -174,13 +177,6 @@ script.on_configuration_changed(init)
 --===========================================================================--
 
 local ev = defines.events
-script.on_event(ev.on_surface_created, (function(event)
-    ctron.on_surface_created(event)
-    gui_handler.surface_created(event)
-end))
-script.on_event(ev.on_pre_surface_deleted, gui_handler.surface_deleted)
-script.on_event(ev.on_surface_deleted, ctron.on_surface_deleted)
-script.on_event(ev.on_surface_renamed, gui_handler.surface_renamed)
 
 ---@param event EventData.on_surface_created
 script.on_event(ev.on_surface_created, function(event)
@@ -191,7 +187,12 @@ script.on_event(ev.on_surface_created, function(event)
     global.repair_queue[index] = {}
     global.constructrons_count[index] = 0
     global.stations_count[index] = 0
+
+    gui_handler.surface_created(event)
 end)
+
+script.on_event(ev.on_surface_renamed, gui_handler.surface_renamed)
+script.on_event(ev.on_pre_surface_deleted, gui_handler.surface_deleted)
 
 ---@param event EventData.on_surface_deleted
 script.on_event(ev.on_surface_deleted, function(event)
@@ -203,7 +204,9 @@ script.on_event(ev.on_surface_deleted, function(event)
     global.constructrons_count[index] = nil
     global.stations_count[index] = nil
 end)
-script.on_event(ev.on_runtime_mod_setting_changed, ctron.mod_settings_changed)
+
+-- TODO: check if this would be beneficial to have
+--script.on_event(ev.on_runtime_mod_setting_changed, ctron.mod_settings_changed)
 
 script.on_event(ev.on_player_created, (function(event) --[[@cast event EventData.on_player_created]]
     gui.init(game.players[event.player_index])
